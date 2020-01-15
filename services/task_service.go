@@ -19,6 +19,9 @@ const connectionString = "mongodb://localhost:27017"
 
 const dbName = "todo_db"
 
+// collection object/instance
+var collection *mongo.Collection
+
 //create connection with mongo db
 func init() {
 	// Set client options
@@ -29,6 +32,14 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// check connection:
+	err = client.Ping(context.TODO(), nil)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 }
 
 func GetTaskList(w http.ResponseWriter, r *http.Request) {
@@ -55,4 +66,12 @@ func CreateTask(w http.ResonseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	var newTask tasks.Task
 	_ = json.NewDecoder(r.Body).Decode(&newTask)
+
+	// insert newTask into database:
+
+	result, err := collection.InsertOne(context.Background(), task)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }
