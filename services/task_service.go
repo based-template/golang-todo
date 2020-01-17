@@ -23,7 +23,7 @@ const connectionString = "mongodb://localhost:27017"
 
 const dbName = "test"
 
-const collectionName = "tasklist"
+const collectionName = "newCollection"
 
 type testTask struct {
 	_id       primitive.ObjectID
@@ -106,10 +106,6 @@ func GetTask(w http.ResponseWriter, r *http.Request) {
 
 // CreateTask : for POST method
 func CreateTask(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Context-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	var newTask tasks.Task
 	//err := json.NewDecoder(r.Body).Decode(&newTask)
 	reqBody, err := ioutil.ReadAll(r.Body)
