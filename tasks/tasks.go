@@ -8,5 +8,5 @@ import (
 type Task struct {
 	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Item      string             `json:"item,omitempty" bson:"item,omitempty"`
-	Completed bool               `json:"completed,omitempty"`
+	Completed bool               `json:"completed,omitempty" bson:"completed,omitempty"`
 }

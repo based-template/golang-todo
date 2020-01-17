@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"./router"
+	"golang-todo/router"
 )
 
 func main() {

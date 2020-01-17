@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"reflect"
 
-	"../tasks"
 	"github.com/gorilla/mux"
+	"golang-todo/tasks"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -22,13 +22,7 @@ const connectionString = "mongodb://localhost:27017"
 
 const dbName = "todo"
 
-const collectionName = "taskCollection"
-
-type testTask struct {
-	_id       primitive.ObjectID
-	item      string
-	completed bool
-}
+const collectionName = "tasks"
 
 // collection object/instance
 var collection *mongo.Collection
@@ -109,6 +103,25 @@ func GetTask(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(taskResult)
 }
 
+// MarkCompleted : using PUT, mark task (specified by id) as having been
+// completed
+func MarkCompleted(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "PUT")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	taskID := (mux.Vars(r))["id"]
+	//taskID is a string, we need to turn it into an id:
+	id, _ := primitive.ObjectIDFromHex(taskID)
+	// construct the filter for the query:
+	filter := bson.M{"_id": id}
+	update := bson.M{"$set": bson.M{"completed": true}}
+	_, err := collection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
 // CreateTask : for POST method
 func CreateTask(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Context-Type", "application/json")
@@ -130,4 +143,22 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Inserted new record: ", result.InsertedID)
 
 	json.NewEncoder(w).Encode(newTask)
+}
+
+// DeleteTask : for DELETE method, deletes record by ID
+func DeleteTask(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	taskID := (mux.Vars(r))["id"]
+	//taskID is a string, we need to turn it into an id:
+	id, _ := primitive.ObjectIDFromHex(taskID)
+	// construct the filter for the query:
+	filter := bson.M{"_id": id}
+	_, err := collection.DeleteOne(context.Background(), filter)
+	if err != nil {
+		fmt.Println("Error deleting record")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
