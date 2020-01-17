@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"reflect"
@@ -21,9 +20,9 @@ import (
 // DB connection string
 const connectionString = "mongodb://localhost:27017"
 
-const dbName = "test"
+const dbName = "todo"
 
-const collectionName = "newCollection"
+const collectionName = "taskCollection"
 
 type testTask struct {
 	_id       primitive.ObjectID
@@ -94,40 +93,41 @@ func GetTask(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
+	var taskResult tasks.Task
 	taskID := (mux.Vars(r))["id"]
 	//taskID is a string, we need to turn it into an id:
 	id, _ := primitive.ObjectIDFromHex(taskID)
 	// construct the filter for the query:
 	filter := bson.M{"_id": id}
-	result := collection.FindOne(context.Background(), filter)
-	json.NewEncoder(w).Encode(result)
+	err := collection.FindOne(context.Background(), filter).Decode(&taskResult)
+
+	if err != nil {
+		// create 500 error (not sure if this is right??)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(taskResult)
 }
 
 // CreateTask : for POST method
 func CreateTask(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Context-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST")
 	var newTask tasks.Task
-	//err := json.NewDecoder(r.Body).Decode(&newTask)
-	reqBody, err := ioutil.ReadAll(r.Body)
+	err := json.NewDecoder(r.Body).Decode(&newTask)
 	if err != nil {
-		fmt.Println("Decoder error:")
+		fmt.Println("Decoder error!")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	fmt.Println("RequestBody: ", reqBody)
-	json.Unmarshal(reqBody, &newTask)
-	fmt.Println("newTask: ", newTask.Item)
-
 	// insert newTask into database:
-	fmt.Println("CreateTask(): ")
-	fmt.Println("newTask: ", newTask, "r.Body: ", r.Body, "r.Header", r.Header)
 	result, err := collection.InsertOne(context.Background(), newTask)
 
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Inserted new record", result.InsertedID)
-	fmt.Println("Record: ", *result)
+	fmt.Println("Inserted new record: ", result.InsertedID)
 
 	json.NewEncoder(w).Encode(newTask)
 }

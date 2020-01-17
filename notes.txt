@@ -1,0 +1,3 @@
+curl -d '{"item":"new new item"}' -H "Content-Type: application/json" -X POST http://localhost:8080/api/tasks
+{"_id":"000000000000000000000000","item":"new new item"}
+
